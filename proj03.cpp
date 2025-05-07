@@ -104,6 +104,7 @@ main( int argc, char *argv[ ] )
 		time0 = omp_get_wtime( );
 
         	// the #pragma goes here -- you figure out what it needs to look like:
+        #pragma omp parallel for default(none) shared(Cities, Capitals)
 		for( int i = 0; i < NUMCITIES; i++ )
 		{
 			int capitalnumber = -1;
@@ -114,11 +115,13 @@ main( int argc, char *argv[ ] )
 				float dist = Distance( i, k );
 				if( dist < mindistance )
 				{
-					?????
-					?????
-					?????
+                    mindistance = dist;
+                    capitalnumber = k;
 				}
 			}
+            
+            Cities[i].capitalnumber = capitalnumber;
+            Cities[i].mindistance = mindistance;
 
 			int k = Cities[i].capitalnumber;
 			// this is here for the same reason as the Trapezoid noteset uses it:
@@ -135,8 +138,8 @@ main( int argc, char *argv[ ] )
 		// get the average longitude and latitude for each capital:
 		for( int k = 0; k < NUMCAPITALS; k++ )
 		{
-			Capitals[k].longitude = ?????
-			Capitals[k].latitude  = ?????
+            Capitals[k].longitude = Capitals[k].longsum / Capitals[k].numsum;
+            Capitals[k].latitude  = Capitals[k].latsum  / Capitals[k].numsum;
 		}
 	}
 
@@ -147,26 +150,37 @@ main( int argc, char *argv[ ] )
 	// this is the extra credit:
 	for( int k = 0; k < NUMCAPITALS; k++ )
 	{
-		?????
+        float bestDist = 1.e+37;
+        int bestCity = -1;
+        for (int i = 0; i < NUMCITIES; i++) {
+            float d = Distance(i, k);
+            if (d < bestDist) {
+                bestDist = d;
+                bestCity = i;
+            }
+        }
+        Capitals[k].name = Cities[bestCity].name;
 	}
 
 
 	// print the longitude-latitude of each new capital city:
 	// you only need to do this once per some number of NUMCAPITALS -- do it for the 1-thread version:
+    
 	if( NUMT == 1 )
 	{
 		for( int k = 0; k < NUMCAPITALS; k++ )
 		{
-			fprintf( stderr, "\t%3d:  %8.2f , %8.2f\n", k, Capitals[k].longitude, Capitals[k].latitude );
+//			fprintf( sƒtderr, "\t%3d:  %8.2f , %8.2f\n", k, Capitals[k].longitude, Capitals[k].latitude );
 
 			//if you did the extra credit, use this fprintf instead:
-			//fprintf( stderr, "\t%3d:  %8.2f , %8.2f , %s\n", k, Capitals[k].longitude, Capitals[k].latitude, Capitals[k].name.c_str() );
+			fprintf( stderr, "\t%3d,%8.2f,%8.2f,%s\n", k, Capitals[k].longitude, Capitals[k].latitude, Capitals[k].name.c_str() );
 		}
 	}
+    
 #ifdef CSV
-        fprintf(stderr, "%2d , %4d , %4d , %8.3lf:\n", NUMT, NUMCITIES, NUMCAPITALS, megaCityCapitalsPerSecond );
+        fprintf(stderr, "%2d,%4zu,%4d,%8.3lf\n", NUMT, NUMCITIES, NUMCAPITALS, megaCityCapitalsPerSecond );
 #else
-        fprintf(stderr, "%2d threads : %4d cities ; %4d capitals; megatrials/sec = %8.3lf\n",
+        fprintf(stderr, "%2d threads : %4zu cities ; %4d capitals; megatrials/sec = %8.3lf\n",
                 NUMT, NUMCITIES, NUMCAPITALS, megaCityCapitalsPerSecond );
 #endif
 
